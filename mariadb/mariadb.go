@@ -15,14 +15,14 @@ type Database struct {
 
 func NewDatabase(user, pass, host, dbname string) Database {
 	URL := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", user, pass, host, dbname)
-	log.Infoln(URL)
+	log.Debugln(URL)
 	db, err := gorm.Open(mysql.Open(URL))
 
 	if err != nil {
 		panic("Failed to connect to mariadb database!")
 	}
 
-	log.Infoln("MariaDB Database connection established")
+	log.Debugln("MariaDB Database connection established")
 
 	// load sql script file for migrations
 	migrations := &migrate.FileMigrationSource{
@@ -32,17 +32,17 @@ func NewDatabase(user, pass, host, dbname string) Database {
 	// validate sqlDB
 	mdb, err := db.DB()
 	if err != nil {
-		log.Infof("Error on sqlDB:", err)
+		log.Fatalf("Error on sqlDB:", err)
 	}
 
 	// apply sql migration
 	n, err := migrate.Exec(mdb, "mysql", migrations, migrate.Up)
 	if err != nil {
-		log.Infof("Error occcured:", err)
+		log.Fatalf("Error occcured:", err)
 	}
 
 	// show migration results
-	log.Infof("Applied %d migrations!\n", n)
+	log.Debugf("Applied %d migrations!\n", n)
 
 	return Database{
 		DB: db,
