@@ -3,6 +3,7 @@ package mariadb
 import (
 	"fmt"
 
+	migrate "github.com/rubenv/sql-migrate"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -21,6 +22,27 @@ func NewDatabase(user, pass, host, dbname string) Database {
 	}
 
 	fmt.Println("MariaDB Database connection established")
+
+	// load sql script file for migrations
+	migrations := &migrate.FileMigrationSource{
+		Dir: "migrations/",
+	}
+
+	// validate sqlDB
+	mdb, err := db.DB()
+	if err != nil {
+		fmt.Println("Error on sqlDB:", err)
+	}
+
+	// apply sql migration
+	n, err := migrate.Exec(mdb, "mysql", migrations, migrate.Up)
+	if err != nil {
+		fmt.Println("Error occcured:", err)
+	}
+
+	// show migration results
+	fmt.Printf("Applied %d migrations!\n", n)
+
 	return Database{
 		DB: db,
 	}
