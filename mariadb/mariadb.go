@@ -13,7 +13,7 @@ type Database struct {
 	DB *gorm.DB
 }
 
-func NewDatabase(user, pass, host, dbname string) Database {
+func NewDatabase(user, pass, host, dbname, dir string) Database {
 	URL := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", user, pass, host, dbname)
 	log.Debugln(URL)
 	db, err := gorm.Open(mysql.Open(URL))
@@ -26,7 +26,7 @@ func NewDatabase(user, pass, host, dbname string) Database {
 
 	// load sql script file for migrations
 	migrations := &migrate.FileMigrationSource{
-		Dir: "migrations/",
+		Dir: dir + "/",
 	}
 
 	// validate sqlDB
