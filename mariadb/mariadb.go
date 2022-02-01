@@ -3,7 +3,6 @@ package mariadb
 import (
 	"fmt"
 
-	"github.com/google/martian/log"
 	migrate "github.com/rubenv/sql-migrate"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
