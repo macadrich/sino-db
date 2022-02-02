@@ -38,7 +38,7 @@ func NewDatabase(user, pass, host, dbname, dir string) Database {
 	// apply sql migration
 	n, err := migrate.Exec(mdb, "mysql", migrations, migrate.Up)
 	if err != nil {
-		log.Fatalln("Error occcured:", err)
+		log.Fatalln("Error occcured:", err, migrations)
 	}
 
 	// show migration results
