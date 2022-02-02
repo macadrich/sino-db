@@ -19,7 +19,7 @@ func NewDatabase(user, pass, host, dbname, dir string) Database {
 	db, err := gorm.Open(mysql.Open(URL))
 
 	if err != nil {
-		panic("Failed to connect to mariadb database!")
+		log.Fatalln("Failed to connect to mariadb database!")
 	}
 
 	log.Debugln("MariaDB Database connection established")
@@ -32,13 +32,13 @@ func NewDatabase(user, pass, host, dbname, dir string) Database {
 	// validate sqlDB
 	mdb, err := db.DB()
 	if err != nil {
-		log.Fatalf("Error on sqlDB:", err)
+		log.Fatalln("Error on sqlDB:", err)
 	}
 
 	// apply sql migration
 	n, err := migrate.Exec(mdb, "mysql", migrations, migrate.Up)
 	if err != nil {
-		log.Fatalf("Error occcured:", err)
+		log.Fatalln("Error occcured:", err)
 	}
 
 	// show migration results
