@@ -12,4 +12,5 @@ func LoadEnv() {
 	if err != nil {
 		log.Fatalf("unable to load .env file")
 	}
+	log.Println("Load env")
 }

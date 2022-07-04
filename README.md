@@ -1,1 +1,3 @@
 # sino-db
+
+- Using GORM
