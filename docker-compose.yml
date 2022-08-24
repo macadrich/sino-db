@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  sino-db:
+    image: sino-db
+    depends_on:
+      - db_mysql
+    networks:
+      - "api.network"
+    volumes:
+      - ".:/app"
+    deploy:
+        replicas: 1
+
+  db_mysql:
+    image: mariadb
+    ports:
+      - "3305:3306"
+    environment:
+      - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+      - "MYSQL_USER=${DB_USER}"
+      - "MYSQL_PASSWORD=${DB_PASSWORD}"
+      - "MYSQL_DATABASE=${DB_NAME}"
+    networks:
+      - "api.network"
+    deploy:
+      replicas: 1
+
+networks:
+    api.network:

@@ -4,90 +4,75 @@ import (
 	"database/sql"
 	"fmt"
 
-	migrate "github.com/rubenv/sql-migrate"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-)
+	_ "github.com/go-sql-driver/mysql"
 
-type Database struct {
-	DB *gorm.DB
-}
+	log "github.com/sirupsen/logrus"
+)
 
 type MDatabase struct {
 	DB *sql.DB
 }
 
-func ConnectMYSQL(user, pass, host, dbname, dir string) (*sql.DB, error) {
+func CreateNewDatabase(user, pass, host, dbname string) {
+	URL := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8&parseTime=True&loc=Local", user, pass, host)
+	db, err := sql.Open("mysql", URL)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbname + ";")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println("Create database:", dbname, "success!")
+}
+
+func ConnectMYSQL(user, pass, host, dbname, dir string) (*MDatabase, error) {
 	URL := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", user, pass, host, dbname)
 	db, err := sql.Open("mysql", URL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return db, nil
+
+	r, err := db.Exec(`CREATE TABLE IF NOT EXISTS sino (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,email VARCHAR(100),name VARCHAR(20),age INT)`)
+	if err != nil {
+		log.Fatalln("failed create table!", err)
+	}
+	ra, _ := r.RowsAffected()
+	log.Infoln("RowsAffected:", ra)
+	return &MDatabase{db}, nil
 }
 
-func (mdb *MDatabase) Query() {
-	res, err := mdb.DB.Query("SELECT * FROM users")
+func (mdb *MDatabase) GetUsers() {
+	res, err := mdb.DB.Query("SELECT * FROM sino")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("query failed: ", err)
 	}
 	for res.Next() {
 		user := struct {
 			ID    string `db:"id"`
-			Name  string `db:"name"`
 			Email string `db:"email"`
+			Name  string `db:"name"`
+			Age   int    `db:"age"`
 		}{}
-		err := res.Scan(&user.ID, &user.Name, &user.Email)
+		err := res.Scan(&user.ID, &user.Email, &user.Name, &user.Age)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln("scan failed: ", err)
 		}
 		log.Infof("%+v\n", user)
 	}
 }
 
-// GORM
-func NewDatabase(user, pass, host, dbname, dir string) Database {
-	URL := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", user, pass, host, dbname)
-	log.Infoln(URL)
-	db, err := gorm.Open(mysql.Open(URL))
+func (mdb *MDatabase) InsertUser(item interface{}) {
+	res, err := mdb.DB.Exec("INSERT INTO sino(email,name,age) VALUES(?,?,?)", "ccc@gmail.com", "ccc", 33)
 	if err != nil {
-		log.Fatalln("Failed to connect to mariadb database!")
+		log.Fatalln("exec insert failed: ", err)
 	}
-	log.Infoln("MariaDB Database connection established")
-
-	// load sql script file for migrations
-	migrations := &migrate.FileMigrationSource{
-		Dir: dir + "/",
-	}
-
-	// validate sqlDB
-	mdb, err := db.DB()
+	lastId, err := res.LastInsertId()
 	if err != nil {
-		log.Fatalln("Error on sqlDB:", err)
+		log.Fatalln("get lastId failed: ", err)
 	}
-
-	// apply sql migration
-	n, err := migrate.Exec(mdb, "mysql", migrations, migrate.Up)
-	if err != nil {
-		log.Fatalln("Error occcured:", err, migrations)
-	}
-
-	// show migration results
-	log.Infof("Applied %d migrations!\n", n)
-
-	return Database{
-		DB: db,
-	}
-}
-
-// GORM
-func (mdb *Database) Create(item interface{}) {
-	r := mdb.DB.Create(item)
-	if r.Error != nil && r.RowsAffected != 1 {
-		log.Error("create failed", r.Error)
-		return
-	}
-
-	log.Infoln("create user successfully!")
+	log.Infoln("Last inserted row id: %d\n", lastId)
 }
